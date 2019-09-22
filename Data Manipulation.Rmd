@@ -1,0 +1,106 @@
+---
+title: "Data Manipulation"
+author: "Dionna Attinson"
+date: "9/19/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Import datasets
+```{r} 
+litters_data = read_csv("./data/FAS_litters.csv")
+litters_data = janitor::clean_names(litters_data)
+
+pups_data = read_csv("./data/FAS_pups.csv")
+pups_data = janitor::clean_names(pups_data)
+```
+
+## Selecting!
+
+```{r}
+## This code chunk is only for filtering column names
+select(litters_data, group, litter_number)
+
+select(litters_data, group, litter_number, gd0_weight)
+
+select(litters_data, litter_number, gd0_weight, starts_with("pups"))
+
+select(litters_data, litter_number, group, everything())
+
+select(litters_data, -group)
+
+select(litters_data, litter_number, gd0_weight:pups_born_alive)
+
+select(litters_data, GROUP = group, litter_number)
+
+rename(litters_data, GROUP = group)
+```
+
+## Filtering
+```{r} 
+##Double equal sign (logical operator) is an assignment. When this is true, keep.
+filter(litters_data, group == "Mod8")
+
+filter(litters_data, gd_of_birth == 20)
+
+filter(litters_data, gd_of_birth < 20)
+
+filter(litters_data, gd_of_birth >= 20)
+
+filter(litters_data, pups_born_alive <6)
+
+## ! means "NOT"
+filter(litters_data, pups_survive !=4)
+
+#or
+filter(litters_data, group == "Con7" | group == "Mod8")
+filter(litters_data, pups_born_alive >=4, pups_born_alive <=6) 
+
+filter(litters_data, gd0_weight + gd18_weight < 70)
+
+#if you only want complete cases
+drop_na(litters_data)
+```
+
+##Mutate
+
+```{r}
+mutate(
+  litters_data, 
+  wt_gain = gd18_weight - gd0_weight, 
+  group = str_to_lower(group)
+) 
+```
+
+## Arrange 
+
+```{r} 
+
+arrange(litters_data, pups_born_alive)
+
+arrange(litters_data, desc(pups_born_alive))
+
+arrange(litters_data, pups_born_alive, gd0_weight)
+```
+
+```{r}
+  litters_data = 
+  read_csv("./data/FAS_litters.csv") %>% 
+  janitor::clean_names() %>% 
+  select(-pups_survive) %>% 
+  mutate(
+    wt_gain = gd18_weight - gd0_weight,
+    group = str_to_lower(group)) %>% 
+  drop_na(gd0_weight)
+```
+
+```{r, eval = FALSE}
+litters_data %>% view()
+
+litters_data %>% pull(gd0_weight %>% mean)
+```
