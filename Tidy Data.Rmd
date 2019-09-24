@@ -1,0 +1,103 @@
+---
+title: "Tidy Data"
+author: "Dionna Attinson"
+date: "9/24/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Wide to Long 
+```{r}
+pulse_data = 
+  haven::read_sas("./data/public_pulse_data.sas7bdat") %>% 
+  janitor::clean_names()
+  pivot_longer(
+    pulse_data,
+    bdi_score_bl:bdi_score_12m,
+    names_to = "visit",
+    names_prefix = "bdi_score_",
+    values_to = "bdi"
+) %>% 
+    mutate(
+      visit = recode(visit, "bl" = "00m")
+    )
+```
+
+## Seperate in Litters
+```{r}
+litters_data = 
+    read_csv("./data/FAS_litters.csv") %>% 
+    janitor::clean_names() %>% 
+    separate(col = group, into = c("dose", "day_of_tx"),3)
+``` 
+
+## Go Untidy
+```{r}
+analysis_result = tibble(
+  group = c("treatment", "treatment", "placebo", "placebo"),
+  time = c("pre","post","pre","post"),
+  mean = c(4,8,3.5,4)
+)
+
+pivot_wider(
+  analysis_result,
+  names_from = time,
+  values_from = mean)
+```
+
+## Bind Rows
+```{r}
+fellowship_data = 
+  readxl::read_excel("./data/LotR_Words.xlsx", range = "B3:D6") %>% 
+  mutate(movie = "fellowship")
+
+two_towers = 
+  readxl::read_excel("./data/LotR_Words.xlsx", range = "F3:H6") %>%
+  mutate(movie = "two_towers")
+
+return_king = 
+  readxl::read_excel("./data/LotR_Words.xlsx", range = "J3:L6") %>%
+  mutate(movie = "return_king")
+
+bind_rows(fellowship_data, two_towers, return_king)
+
+lotr_data = 
+  bind_rows(fellowship_data, two_towers, return_king) %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    female:male,
+    names_to = "sex",
+    values_to = "words"
+  ) %>% 
+  mutate(race = str_to_lower(race)) %>% 
+  select(movie, everything()) 
+```
+
+## Something else
+```{r}
+pups_data = 
+  read_csv("./data/FAS_pups.csv", col_types = "ciiiii") %>%
+  janitor::clean_names() %>%
+  mutate(sex = recode(sex, `1` = "male", `2` = "female")) 
+
+litters_data = 
+  read_csv("./data/FAS_litters.csv", col_types = "ccddiiii") %>%
+  janitor::clean_names() %>%
+  select(-pups_survive) %>%
+  mutate(
+    wt_gain = gd18_weight - gd0_weight,
+    group = str_to_lower(group))
+```
+
+## Gonna join these datasets 
+
+```{r}
+fas_data = 
+  left_join(pups_data, litters_data, by = "litter_number")
+```
+
